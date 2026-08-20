@@ -1,0 +1,46 @@
+<!-- ==================== Cards Grid ==================== -->
+{% if brands.is_empty() %}
+  <div class="card empty-state-card">
+    <div class="empty-state">
+      <div class="empty-icon">ب</div>
+      <p>لا يوجد أي براند مضاف حتى الآن</p>
+      <p class="empty-sub">اضغط على زر "إضافة براند جديد" للبدء</p>
+    </div>
+  </div>
+{% else %}
+  <div class="brands-grid">
+    {% for brand in brands %}
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <span class="avatar" style="background: {{ brand.name_en|initial_color }};">
+            {{ brand.name_en|first_letter }}
+          </span>
+          <div class="brand-titles">
+            <h3 class="name-ar">{{ brand.name_ar }}</h3>
+            <span class="name-en">{{ brand.name_en }}</span>
+          </div>
+        </div>
+
+        <div class="brand-card-body">
+          <p class="brand-notes" title="{% if let Some(notes) = brand.notes %}{{ notes }}{% endif %}">
+            {% if let Some(notes) = brand.notes %}
+              {{ notes }}
+            {% else %}
+              <span class="no-notes">لا توجد ملاحظات</span>
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="brand-card-footer">
+          <span class="brand-date">{{ brand.created_at.format("%Y-%m-%d") }}</span>
+          <div class="card-actions">
+            <a href="/web/brands/edit/{{ brand.id }}" class="btn btn-edit-link">تعديل</a>
+            <form method="post" action="/web/brands/delete/{{ brand.id }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
+              <button type="submit" class="btn btn-danger-link">حذف</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

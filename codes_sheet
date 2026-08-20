@@ -59,7 +59,11 @@ cargo tree                        # dependency tree
 ```
 
 ## Cargo Watch
-```
+```bash
 cargo watch -c -q -i "static/css/main.css" -x "run --bin nour"
 cargo watch -c -q -x "run --bin nour"
 cargo watch -q -c -x "run --bin main"
+
+cargo clean -p package_name
+
+```

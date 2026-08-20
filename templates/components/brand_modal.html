@@ -1,0 +1,49 @@
+<!-- ==================== Modal (Create / Edit) ==================== -->
+<div id="brand-modal" class="modal-overlay {% if edit_brand.is_some() %}active{% endif %}">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>{% if edit_brand.is_some() %}تعديل براند{% else %}إضافة براند جديد{% endif %}</h2>
+      <a href="/web/brands" class="modal-close" onclick="closeBrandModal(event)">&times;</a>
+    </div>
+
+    {% if let Some(brand) = edit_brand %}
+      <form method="post" action="/web/brands/update/{{ brand.id }}">
+        <div class="field">
+          <label for="name">الاسم بالإنجليزية</label>
+          <input type="text" id="name" name="name" value="{{ brand.name_en }}" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="name_ar">الاسم بالعربية</label>
+          <input type="text" id="name_ar" name="name_ar" value="{{ brand.name_ar }}" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="notes">ملاحظات (اختياري)</label>
+          <textarea id="notes" name="notes">{% if let Some(notes) = brand.notes %}{{ notes }}{% endif %}</textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">حفظ التعديلات</button>
+          <a href="/web/brands" class="btn btn-ghost">إلغاء</a>
+        </div>
+      </form>
+    {% else %}
+      <form method="post" action="/web/brands">
+        <div class="field">
+          <label for="name">الاسم بالإنجليزية</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Nike" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="name_ar">الاسم بالعربية</label>
+          <input type="text" id="name_ar" name="name_ar" placeholder="مثال: نايك" maxlength="100" required>
+        </div>
+        <div class="field">
+          <label for="notes">ملاحظات (اختياري)</label>
+          <textarea id="notes" name="notes" placeholder="أي ملاحظات إضافية عن البراند"></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">إضافة البراند</button>
+          <button type="button" class="btn btn-ghost" onclick="closeBrandModal()">إلغاء</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>

@@ -1,3 +1,8 @@
+mod web;
+mod common;
+mod domain;
+
+
 mod startup;
 mod state;
 use std::net::SocketAddr;
@@ -7,6 +12,8 @@ use dotenvy::dotenv;
 use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
 
 use crate::state::AppState;
+
+use web::router;
 
 
 
@@ -36,7 +43,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("CORS middleware layer configured.");
 // 5. Build the Axum router with state and middleware attached
 let app = Router::new()
-   
+    
+    .nest("/web", router())
     .nest_service("/static", ServeDir::new("static"))
     .layer(cors)
     .with_state(state);

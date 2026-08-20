@@ -1,0 +1,29 @@
+<!-- ==================== Header Toolbar ==================== -->
+<div class="top-toolbar">
+    <div class="toolbar-title">
+        <h1>إدارة البراندات</h1>
+        <span class="badge-count">{{ brands.len() }} براند</span>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container" style="position: relative;">
+        <input 
+            type="search" 
+            name="q" 
+            class="search-input" 
+            placeholder="بحث عن براند..." 
+            autocomplete="off"
+            hx-get="/web/brands/search" 
+            hx-trigger="keyup changed delay:300ms, search" 
+            hx-target="#search-results-dropdown" 
+        />
+        
+        <!-- HTMX will inject brand_search_results.html directly INTO here -->
+        <div id="search-results-dropdown" class="search-dropdown"></div>
+    </div>
+
+    <!-- Add Action -->
+    <button type="button" class="btn btn-primary" onclick="openBrandModal()">
+        <span class="btn-icon">+</span> إضافـة برانـد جديـد
+    </button>
+</div>

@@ -20,7 +20,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE IF NOT EXISTS public.brands
 (
     id bigint NOT NULL GENERATED ALWAYS AS IDENTITY,
-    name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    name_en character varying(255) COLLATE pg_catalog."default" NOT NULL,
     name_ar character varying(255) COLLATE pg_catalog."default" NOT NULL,
     notes text COLLATE pg_catalog."default",
     created_at timestamp with time zone NOT NULL DEFAULT now(),
@@ -36,9 +36,9 @@ ALTER TABLE IF EXISTS public.brands OWNER to mohammed;
 -- 2. Indexes for brands
 -- ========================================================
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_brands_unique_name_lower
+CREATE UNIQUE INDEX IF NOT EXISTS idx_brands_unique_name_en_lower
     ON public.brands USING btree
-    (lower(name::text) COLLATE pg_catalog."default" ASC NULLS LAST)
+    (lower(name_en::text) COLLATE pg_catalog."default" ASC NULLS LAST)
     WITH (fillfactor=100, deduplicate_items=True)
     TABLESPACE pg_default;
 

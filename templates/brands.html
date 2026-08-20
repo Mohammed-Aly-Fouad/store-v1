@@ -1,0 +1,16 @@
+{% extends "base.html" %} {% block title %}إدارة البراندات{% endblock %}
+
+{%block head %} 
+<link rel="stylesheet" href="/static/css/global.css" />
+{% endblock %}
+
+{% block content %}
+{% include "components/brand_header_toolbar.html" %}
+{% include "components/brand_card_grid.html"%}
+{% include "components/brand_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/main.js" defer></script>
+<script src="/static/js/brands.js" defer></script>
+{% endblock %}

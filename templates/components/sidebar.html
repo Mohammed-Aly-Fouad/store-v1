@@ -1,0 +1,29 @@
+<aside class="sidebar">
+  <div class="brand-mark"><span class="dot"></span> لوحة التحكم</div>
+  <ul class="nav-list">
+    <li>
+      <a href="/web/brands" class="{% if current_page is defined %}{% if current_page == "brands" %}active{% endif %}{% endif %}">
+        <span class="nav-icon">ب</span>
+        البراندات
+      </a>
+    </li>
+    <li>
+      <a href="/web/categories" class="{% if current_page is defined %}{% if current_page == "categories" %}active{% endif %}{% endif %}">
+        <span class="nav-icon">ف</span>
+        الفئات
+      </a>
+    </li>
+    <li>
+      <a href="/web/products" class="{% if current_page is defined %}{% if current_page == "products" %}active{% endif %}{% endif %}">
+        <span class="nav-icon">م</span>
+        المنتجات
+      </a>
+    </li>
+    <li>
+      <a href="/web/product_variants" class="{% if current_page is defined %}{% if current_page == "variants" %}active{% endif %}{% endif %}">
+        <span class="nav-icon">م</span>
+        متغيرات المنتج
+      </a>
+    </li>
+  </ul>
+</aside>

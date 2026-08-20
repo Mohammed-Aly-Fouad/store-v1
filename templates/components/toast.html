@@ -1,0 +1,21 @@
+<div id="flash-alert-container">
+  {% if let Some(msg) = success_message %}
+    <div id="flash-alert" class="alert-toast alert-success" data-toast>
+      <div class="alert-content">
+        <span class="alert-icon">✓</span>
+        <span class="alert-text">{{ msg }}</span>
+      </div>
+      <button class="alert-close" type="button" onclick="dismissAlert('flash-alert')">✕</button>
+    </div>
+  {% endif %}
+
+  {% if let Some(msg) = error_message %}
+    <div id="flash-alert" class="alert-toast alert-danger" data-toast>
+      <div class="alert-content">
+        <span class="alert-icon">✕</span>
+        <span class="alert-text">{{ msg }}</span>
+      </div>
+      <button class="alert-close" type="button" onclick="dismissAlert('flash-alert')">✕</button>
+    </div>
+  {% endif %}
+</div>
