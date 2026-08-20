@@ -1,9 +1,9 @@
 <!-- ==================== Modal (Create / Edit) ==================== -->
-<div id="brand-modal" class="modal-overlay {% if edit_brand.is_some() %}active{% endif %}">
+<div id="main-modal" class="modal-overlay {% if edit_brand.is_some() %}active{% endif %}">
   <div class="modal-card">
     <div class="modal-header">
       <h2>{% if edit_brand.is_some() %}تعديل براند{% else %}إضافة براند جديد{% endif %}</h2>
-      <a href="/web/brands" class="modal-close" onclick="closeBrandModal(event)">&times;</a>
+      <a href="/web/brands" class="modal-close" onclick="closeModal(event)">&times;</a>
     </div>
 
     {% if let Some(brand) = edit_brand %}
@@ -41,7 +41,7 @@
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">إضافة البراند</button>
-          <button type="button" class="btn btn-ghost" onclick="closeBrandModal()">إلغاء</button>
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">إلغاء</button>
         </div>
       </form>
     {% endif %}

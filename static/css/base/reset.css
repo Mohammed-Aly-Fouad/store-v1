@@ -1,0 +1,54 @@
+/* ==================== Global Variables & Design Tokens ==================== */
+:root {
+  --bg: #F5F6F8;
+  --surface: #FFFFFF;
+  --border: #E5E7EB;
+  --text-primary: #111827;
+  --text-secondary: #6B7280;
+
+  --sidebar-bg: #101826;
+  --sidebar-text: #93A1B7;
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-active-bg: #1B2537;
+
+  --accent: #0E7C66;
+  --accent-soft: #E3F3EF;
+  --accent-dark: #0B5F4F;
+
+  --danger: #DC2626;
+  --danger-soft: #FDEAEA;
+
+  --radius: 12px;
+  --sidebar-w: 240px;
+}
+
+/* ==================== Base Reset & Typography ==================== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  min-height: 100vh;
+}
+
+h1, h2, h3, .brand-mark {
+  font-family: 'Almarai', sans-serif;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Clear browser default 'x' button inside type="search" */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}

@@ -8,21 +8,21 @@
     </div>
   </div>
 {% else %}
-  <div class="brands-grid">
+  <div class="base-grid">
     {% for brand in brands %}
-      <div class="brand-card">
-        <div class="brand-card-header">
+      <div class="base-card">
+        <div class="base-card-header">
           <span class="avatar" style="background: {{ brand.name_en|initial_color }};">
             {{ brand.name_en|first_letter }}
           </span>
-          <div class="brand-titles">
+          <div class="base-titles">
             <h3 class="name-ar">{{ brand.name_ar }}</h3>
             <span class="name-en">{{ brand.name_en }}</span>
           </div>
         </div>
 
-        <div class="brand-card-body">
-          <p class="brand-notes" title="{% if let Some(notes) = brand.notes %}{{ notes }}{% endif %}">
+        <div class="base-card-body">
+          <p class="base-notes" title="{% if let Some(notes) = brand.notes %}{{ notes }}{% endif %}">
             {% if let Some(notes) = brand.notes %}
               {{ notes }}
             {% else %}
@@ -31,8 +31,8 @@
           </p>
         </div>
 
-        <div class="brand-card-footer">
-          <span class="brand-date">{{ brand.created_at.format("%Y-%m-%d") }}</span>
+        <div class="base-card-footer">
+          <span class="base-date">{{ brand.created_at.format("%Y-%m-%d") }}</span>
           <div class="card-actions">
             <a href="/web/brands/edit/{{ brand.id }}" class="btn btn-edit-link">تعديل</a>
             <form method="post" action="/web/brands/delete/{{ brand.id }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
