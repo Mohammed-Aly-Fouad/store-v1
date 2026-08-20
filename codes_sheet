@@ -1,0 +1,65 @@
+## SQLX
+```bash
+sqlx database create
+sqlx migrate run
+sqlx migrate add your_file_name
+cargo sqlx prepare
+sqlx database drop
+sqlx database create
+sqlx migrate run
+```
+
+## GIT
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git status
+```
+## Git push
+```bash
+git push --force-with-lease origin main    # Safest
+git push -f origin main
+```
+## Git pull
+```bash
+# 1. Fetch the latest changes from the remote repository
+git fetch origin
+
+# 2. Hard reset your current branch to match the remote branch (replace 'main' with your branch name)
+git reset --hard origin/main
+
+# 3. Clean
+git clean -fd  
+```
+
+
+
+## CARGO
+
+## Rust — Cargo Project
+```
+cargo new <name>                  # new binary project
+cargo new <name> --lib            # new library project
+cargo init                        # init in existing dir
+cargo build                       # compile (debug)
+cargo build --release             # compile (optimized)
+cargo run                         # build + run
+cargo run --release
+cargo check                       # fast type-check, no binary
+```
+
+## Rust — Dependencies
+```
+cargo add <crate>                 # add dependency
+cargo add <crate>@<version>
+cargo remove <crate>
+cargo update                      # update Cargo.lock
+cargo tree                        # dependency tree
+```
+
+## Cargo Watch
+```
+cargo watch -c -q -i "static/css/main.css" -x "run --bin nour"
+cargo watch -c -q -x "run --bin nour"
+cargo watch -q -c -x "run --bin main"
