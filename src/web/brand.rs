@@ -122,7 +122,7 @@ pub async fn render_brands_page(
 
 pub async fn create_brand(
     State(state): State<AppState>,
-    Form(form): Form<CreateBrandForm>,
+    Form(mut form): Form<CreateBrandForm>,
 ) -> Response {
     // 1. التحقق من المدخلات (Validation)
     if let Err(form_err) = form.validate() {
@@ -136,26 +136,27 @@ pub async fn create_brand(
         .into_response();
     }
 
-    let trimmed_name_en = form.name_en.trim();
-    let trimmed_name_ar = form.name_ar.trim();
-    let trimmed_notes = form
+    // 2. تنظيف البيانات وتعديل form مباشرة لضمان الاتساق
+    form.name_en = form.name_en.trim().to_string();
+    form.name_ar = form.name_ar.trim().to_string();
+    form.notes = form
         .notes
         .as_deref()
         .map(str::trim)
         .filter(|s| !s.is_empty())
         .map(String::from);
 
-    // 2. التنفيذ في قاعدة البيانات
+    // 3. التنفيذ في قاعدة البيانات
     let result = sqlx::query!(
         r#"INSERT INTO brands (name_en, name_ar, notes) VALUES ($1, $2, $3)"#,
-        trimmed_name_en,
-        trimmed_name_ar,
-        trimmed_notes
+        form.name_en,
+        form.name_ar,
+        form.notes
     )
     .execute(&state.pool)
     .await;
 
-    // 3. معالجة النتيجة
+    // 4. معالجة النتيجة
     match result {
         Ok(_) => Redirect::to("/web/brands?action=created").into_response(),
 
@@ -171,15 +172,19 @@ pub async fn create_brand(
             .into_response()
         }
 
-        // خطأ عام من قاعدة البيانات
-        Err(_) => BrandCreateTemplate {
-            form, // تم إضافتها حتى لا يتوقف التجميع
-            errors: None,
-            error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
-            success_message: None,
-            current_page: "brand".to_string(),
+        // خطأ عام من قاعدة البيانات مع تسجيل التفاصيل في الـ Logs
+        Err(err) => {
+            tracing::error!("فشل إدخال العلامة التجارية في قاعدة البيانات: {:?}", err);
+
+            BrandCreateTemplate {
+                form,
+                errors: None,
+                error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
+                success_message: None,
+                current_page: "brand".to_string(),
+            }
+            .into_response()
         }
-        .into_response(),
     }
 }
 
@@ -222,12 +227,28 @@ pub async fn render_edit_page(
 pub async fn edit_brand(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    Form(form): Form<CreateBrandForm>,
+    Form(mut form): Form<CreateBrandForm>,
 ) -> Response {
-    // 1. التحقق من صحة المدخلات
+    // 1. جلب السجل أولاً والتأكد من وجوده في قاعدة البيانات
+    let existing_brand = match fetch_brand_by_id(&state, id).await {
+        Some(brand) => brand,
+        None => return Redirect::to("/web/brands?error=not_found").into_response(),
+    };
+
+    // 2. تنظيف المدخلات وتعديل form مباشرة
+    form.name_en = form.name_en.trim().to_string();
+    form.name_ar = form.name_ar.trim().to_string();
+    form.notes = form
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from);
+
+    // 3. التحقق من صحة المدخلات (Validation)
     if let Err(form_err) = form.validate() {
         return BrandUpdateTemplate {
-            brand: fetch_brand_by_id(&state, id).await,
+            brand: Some(existing_brand),
             form,
             errors: Some(form_err),
             current_page: "brand".to_string(),
@@ -237,25 +258,10 @@ pub async fn edit_brand(
         .into_response();
     }
 
-    let trimmed_name_en = form.name_en.trim();
-    let trimmed_name_ar = form.name_ar.trim();
-    let trimmed_notes = form
-        .notes
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(String::from);
-
-    // 2. جلب السجل الحالي من قاعدة البيانات
-    let existing_brand = match fetch_brand_by_id(&state, id).await {
-        Some(brand) => brand,
-        None => return Redirect::to("/web/brands?error=not_found").into_response(),
-    };
-
-    // 3. التحقق مما إذا كانت البيانات مطابقة تماماً دون أي تغيير
-    let is_unchanged = existing_brand.name_en == trimmed_name_en
-        && existing_brand.name_ar == trimmed_name_ar
-        && existing_brand.notes == trimmed_notes;
+    // 4. التحقق مما إذا كانت البيانات مطابقة تماماً دون أي تغيير
+    let is_unchanged = existing_brand.name_en == form.name_en
+        && existing_brand.name_ar == form.name_ar
+        && existing_brand.notes == form.notes;
 
     if is_unchanged {
         return BrandUpdateTemplate {
@@ -269,21 +275,22 @@ pub async fn edit_brand(
         .into_response();
     }
 
-    // 4. تنفيذ الاستعلام فقط في حال وجود تغيير حقيقي
+    // 5. تنفيذ استعلام التحديث
     let result = sqlx::query!(
         r#"UPDATE brands SET name_en = $1, name_ar = $2, notes = $3 WHERE id = $4"#,
-        trimmed_name_en,
-        trimmed_name_ar,
-        trimmed_notes,
+        form.name_en,
+        form.name_ar,
+        form.notes,
         id
     )
     .execute(&state.pool)
     .await;
 
-    // 5. معالجة النتيجة
+    // 6. معالجة النتيجة
     match result {
         Ok(_) => Redirect::to("/web/brands?action=updated").into_response(),
 
+        // خطأ التكرار Unique Constraint
         Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
             BrandUpdateTemplate {
                 brand: Some(existing_brand),
@@ -296,14 +303,19 @@ pub async fn edit_brand(
             .into_response()
         }
 
-        Err(_) => BrandUpdateTemplate {
-            brand: Some(existing_brand),
-            form,
-            errors: None,
-            current_page: "brand".to_string(),
-            error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
-            success_message: None,
+        // خطأ عام من قاعدة البيانات مع تسجيل التفاصيل
+        Err(err) => {
+            tracing::error!("فشل تحديث العلامة التجارية ذات المعرف {}: {:?}", id, err);
+
+            BrandUpdateTemplate {
+                brand: Some(existing_brand),
+                form,
+                errors: None,
+                current_page: "brand".to_string(),
+                error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
+                success_message: None,
+            }
+            .into_response()
         }
-        .into_response(),
     }
 }
