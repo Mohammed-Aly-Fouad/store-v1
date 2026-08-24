@@ -11,7 +11,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::encode::IsNull::No;
 
-use crate::domain::brand::dto::{BrandCreateTemplate, BrandResponseDTO, BrandsTemplate, CreateBrandForm, FlashParams};
+use crate::domain::brand::dto::{BrandCreateTemplate, BrandFormErrors, BrandResponseDTO, BrandUpdateTemplate, BrandsTemplate, CreateBrandForm, FlashParams};
 
 use crate::state::AppState;
 
@@ -24,6 +24,8 @@ pub fn router() -> Router<AppState> {
     .route("/", post(create_brand))
     .route("/create", get(render_form_page))
     .route("/create", post(create_brand))
+    .route("/edit/{id}", get(render_edit_page))
+    .route("/edit/{id}", post(edit_brand))
 
     }
 
@@ -122,26 +124,28 @@ pub async fn create_brand(
     State(state): State<AppState>,
     Form(form): Form<CreateBrandForm>,
 ) -> Response {
+    // 1. التحقق من المدخلات (Validation)
     if let Err(form_err) = form.validate() {
-        return BrandsTemplate {
-            brands: fetch_all_brands(&state).await,
-            // brand_form_errors: Some(form_err),
+        return BrandCreateTemplate {
+            form,
+            errors: Some(form_err),
             error_message: Some("يرجى تصحيح الأخطاء لإستكمال التسجيل".to_string()),
             success_message: None,
-            // edit_brand: None,
             current_page: "brand".to_string(),
-            // form_data: Some(form),
-            // show_modal: true
-        }.into_response();
+        }
+        .into_response();
     }
 
     let trimmed_name_en = form.name_en.trim();
     let trimmed_name_ar = form.name_ar.trim();
-    let trimmed_notes = form.notes.as_deref()
-    .map(str::trim)
-    .filter(|s| !s.is_empty())
-    .map(String::from);
+    let trimmed_notes = form
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from);
 
+    // 2. التنفيذ في قاعدة البيانات
     let result = sqlx::query!(
         r#"INSERT INTO brands (name_en, name_ar, notes) VALUES ($1, $2, $3)"#,
         trimmed_name_en,
@@ -151,37 +155,155 @@ pub async fn create_brand(
     .execute(&state.pool)
     .await;
 
+    // 3. معالجة النتيجة
     match result {
-        Ok(_) => Redirect::to("/web/brands?action=created")
-        .into_response(),
+        Ok(_) => Redirect::to("/web/brands?action=created").into_response(),
+
+        // خطأ التكرار Unique Constraint
         Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
-            BrandsTemplate {
-                brands: fetch_all_brands(&state).await,
-                // brand_form_errors: None,
+            BrandCreateTemplate {
+                form,
+                errors: None,
                 error_message: Some("هذا البيان مسجل بالفعل".to_string()),
                 success_message: None,
-                // edit_brand: None,
                 current_page: "brand".to_string(),
-                // form_data: None,
-                // show_modal: false,
-            }.into_response()
+            }
+            .into_response()
         }
 
-        Err(_) => BrandsTemplate {
-            brands: fetch_all_brands(&state).await,
-            error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقا".to_string()),
+        // خطأ عام من قاعدة البيانات
+        Err(_) => BrandCreateTemplate {
+            form, // تم إضافتها حتى لا يتوقف التجميع
+            errors: None,
+            error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
             success_message: None,
             current_page: "brand".to_string(),
-            // edit_brand: None,
-            // brand_form_errors: None,
-            // form_data: None,
-            // show_modal: false,
-        }.into_response()
+        }
+        .into_response(),
     }
+}
 
 
+pub async fn render_edit_page(
+    State(state): State<AppState>,
+    Path(id): Path<i64>
+) -> Response {
+    let brand = sqlx::query_as!(
+        BrandResponseDTO,
+        r#"SELECT id, name_en, name_ar, notes, created_at, updated_at FROM brands WHERE id = $1"#,
+        id
+    ).fetch_optional(&state.pool)
+    .await;
+
+    match brand {
+        Ok(Some(b)) => {
+            let form = CreateBrandForm {
+                name_en: b.name_en.clone(),
+                name_ar: b.name_ar.clone(),
+                notes: b.notes.clone(),
+            };
+            BrandUpdateTemplate {
+                brand: Some(b),
+                form,
+                errors: None,
+                current_page: "brand".to_string(),
+                error_message: None,
+                success_message: None
+            }.into_response()
+        }
+        Ok(None) => Redirect::to("/web/brands?error=not_found").into_response(),
+        Err(_) => Redirect::to("/web/brands?error=db_error").into_response(),
+    }
 }
 
 
 
 
+pub async fn edit_brand(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+    Form(form): Form<CreateBrandForm>,
+) -> Response {
+    // 1. التحقق من صحة المدخلات
+    if let Err(form_err) = form.validate() {
+        return BrandUpdateTemplate {
+            brand: fetch_brand_by_id(&state, id).await,
+            form,
+            errors: Some(form_err),
+            current_page: "brand".to_string(),
+            error_message: Some("يرجى تصحيح الأخطاء لإستكمال التعديل".to_string()),
+            success_message: None,
+        }
+        .into_response();
+    }
+
+    let trimmed_name_en = form.name_en.trim();
+    let trimmed_name_ar = form.name_ar.trim();
+    let trimmed_notes = form
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from);
+
+    // 2. جلب السجل الحالي من قاعدة البيانات
+    let existing_brand = match fetch_brand_by_id(&state, id).await {
+        Some(brand) => brand,
+        None => return Redirect::to("/web/brands?error=not_found").into_response(),
+    };
+
+    // 3. التحقق مما إذا كانت البيانات مطابقة تماماً دون أي تغيير
+    let is_unchanged = existing_brand.name_en == trimmed_name_en
+        && existing_brand.name_ar == trimmed_name_ar
+        && existing_brand.notes == trimmed_notes;
+
+    if is_unchanged {
+        return BrandUpdateTemplate {
+            brand: Some(existing_brand),
+            form,
+            errors: None,
+            current_page: "brand".to_string(),
+            error_message: Some("لم يتم إجراء أي تغييرات على البيانات".to_string()),
+            success_message: None,
+        }
+        .into_response();
+    }
+
+    // 4. تنفيذ الاستعلام فقط في حال وجود تغيير حقيقي
+    let result = sqlx::query!(
+        r#"UPDATE brands SET name_en = $1, name_ar = $2, notes = $3 WHERE id = $4"#,
+        trimmed_name_en,
+        trimmed_name_ar,
+        trimmed_notes,
+        id
+    )
+    .execute(&state.pool)
+    .await;
+
+    // 5. معالجة النتيجة
+    match result {
+        Ok(_) => Redirect::to("/web/brands?action=updated").into_response(),
+
+        Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
+            BrandUpdateTemplate {
+                brand: Some(existing_brand),
+                form,
+                errors: None,
+                current_page: "brand".to_string(),
+                error_message: Some("هذا البيان مسجل بالفعل".to_string()),
+                success_message: None,
+            }
+            .into_response()
+        }
+
+        Err(_) => BrandUpdateTemplate {
+            brand: Some(existing_brand),
+            form,
+            errors: None,
+            current_page: "brand".to_string(),
+            error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
+            success_message: None,
+        }
+        .into_response(),
+    }
+}

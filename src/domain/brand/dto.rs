@@ -106,6 +106,21 @@ pub struct BrandCreateTemplate {
     pub success_message: Option<String>,
 }
 
+
+#[derive(Template, WebTemplate)]
+#[template(path = "brand_update.html")]
+pub struct BrandUpdateTemplate {
+    pub brand: Option<BrandResponseDTO>,
+    pub form: CreateBrandForm,
+    pub errors: Option<BrandFormErrors>,
+    pub current_page: String,
+    pub error_message: Option<String>,
+    pub success_message: Option<String>,
+}
+
+
+
+
 /// Partial HTML snippet template for HTMX/Dynamic live brand search.
 #[derive(Template, WebTemplate)]
 #[template(path = "partials/brand_search_results.html")]
@@ -169,7 +184,3 @@ pub struct FlashParams {
 
 
 
-//###################### TEST CREATE #######################
-
-
-//###################### END TEST CREATE #######################
