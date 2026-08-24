@@ -179,6 +179,7 @@ pub mod filters {
 #[derive(Debug, Deserialize)]
 pub struct FlashParams {
     pub action: Option<String>,
+    pub error: Option<String>
 }
 
 

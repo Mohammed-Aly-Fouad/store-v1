@@ -105,9 +105,14 @@ pub async fn render_brands_page(
         _ => None,
     };
 
+    let error_message = match params.error.as_deref() {
+        Some("not_found") => Some("غير موجود بقاعدة البيانات".to_string()),
+        Some("db_error") => Some("خطأ عام بقاعدة البيانات".to_string()),
+        _ => None,
+    };
     BrandsTemplate {
         brands: fetch_all_brands(&state).await,
-        error_message: None,
+        error_message: error_message,
         success_message,
         current_page: "brands".to_string(),
         // brand_form_errors: None,
