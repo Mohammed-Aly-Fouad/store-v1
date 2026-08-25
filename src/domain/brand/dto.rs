@@ -169,7 +169,6 @@ pub mod filters {
 }
 
 
-
 // ============================================================================
 // FLASH MESSAGES & QUERY PARAMS
 // ============================================================================
@@ -181,6 +180,7 @@ pub struct FlashParams {
     pub action: Option<String>,
     pub error: Option<String>
 }
+
 
 
 

@@ -1,0 +1,51 @@
+{% if categories.is_empty()%}
+<div class="card empty-state-card">
+<div class="empty-state">
+<div class="empty-icon">ف</div>
+<p>لا توجد أي فئة مضافة حتى الآن</p>
+<p class="empty-sub">
+اضغط على زر "إضافة فئة جديدة للبدء"
+</p>
+</div>
+</div>
+{% else %}
+<div class="base-grid">
+    {% for category in categories %}
+      <div class="base-card">
+        <div class="base-card-header">
+          <span class="avatar" style="background: {{ category.name_en|initial_color }};">
+            {{ category.name_en|first_letter }}
+          </span>
+          <div class="base-titles">
+            <h3 class="name-ar">{{ category.name_ar }}</h3>
+            <span class="name-en">{{ category.name_en }}</span>
+          </div>
+        </div>
+    {% if let Some(parent_name) = category.parent_name%}
+    <h6>{{parent_name}}</h6>
+    {% else %}
+    <h5>فئة رئيسية</h5>
+    {% endif %}
+        <div class="base-card-body">
+          <p class="base-notes" title="{% if let Some(notes) = category.notes %}{{ notes }}{% endif %}">
+            {% if let Some(notes) = category.notes %}
+              {{ notes }}
+            {% else %}
+              <span class="no-notes">لا توجد ملاحظات</span>
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="base-card-footer">
+          <span class="base-date">{{ category.created_at.format("%Y-%m-%d") }}</span>
+          <div class="card-actions">
+            <a href="/web/categories/{{ category.id }}/edit" class="btn btn-edit-link">تعديل</a>
+            <form method="post" action="/web/categories/{{ category.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
+              <button type="submit" class="btn btn-danger-link">حذف</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}

@@ -112,10 +112,6 @@ pub async fn render_brands_page(
         error_message: error_message,
         success_message,
         current_page: "brands".to_string(),
-        // brand_form_errors: None,
-        // edit_brand: None,
-        // form_data: None,
-        // show_modal: false,
     }
 }
 

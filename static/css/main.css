@@ -126,6 +126,22 @@ input[type="search"]::-webkit-search-results-decoration {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
 }
 
+
+/* Common Dynamic Avatar Circle */
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+
 .base-card-header {
   display: flex;
   align-items: center;
@@ -185,6 +201,10 @@ input[type="search"]::-webkit-search-results-decoration {
   display: flex;
   gap: 4px;
 }
+
+
+
+
 /* --- static/css/components/form.css --- */
 /* ==================== Forms & Inputs ==================== */
 .field {
@@ -481,19 +501,7 @@ input[type="search"]::-webkit-search-results-decoration {
   color: #065F46;
 }
 
-/* Common Dynamic Avatar Circle */
-.avatar-sm {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  font-weight: bold;
-  font-size: 13px;
-  flex-shrink: 0;
-}
+
 /* --- static/css/components/header_toolbar.css --- */
 /* ==================== Page Header & Header Toolbar ==================== */
 .header-toolbar {

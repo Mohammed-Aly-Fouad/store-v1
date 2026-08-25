@@ -1,0 +1,29 @@
+<!-- ==================== Header Toolbar ==================== -->
+<div class="header-toolbar">
+    <div class="toolbar-title">
+        <h1>إدارة الفئات</h1>
+        <span class="badge-count">{{ categories.len() }} فئة</span>
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container" style="position: relative;">
+        <input 
+            type="search" 
+            name="q" 
+            class="search-input" 
+            placeholder="بحث عن فئة..." 
+            autocomplete="off"
+            hx-get="/web/categories/search" 
+            hx-trigger="keyup changed delay:300ms, search" 
+            hx-target="#search-results-dropdown" 
+        />
+        
+        <!-- HTMX will inject brand_search_results.html directly INTO here -->
+        <div id="search-results-dropdown" class="search-dropdown"></div>
+    </div>
+
+    <!-- Add Action -->
+   <a href="/web/categories/create" class="btn btn-primary">
+  <span class="btn-icon">+</span> إضافة فئة جديدة
+</a>
+</div>
