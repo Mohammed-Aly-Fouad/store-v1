@@ -4,8 +4,7 @@
     </div>
 {% else %}
    {% for brand in brands %}
-    <!-- غيّر الرابط هنا ليكون /edit/id بدلاً من ?edit=id -->
-    <a href="/web/brands/edit/{{ brand.id }}" class="search-dropdown-item">
+    <a href="/web/brands/{{ brand.id }}/edit" class="search-dropdown-item">
         <span class="item-name-ar">{{ brand.name_ar }}</span>
         <span class="item-name-en">{{ brand.name_en }}</span>
     </a>

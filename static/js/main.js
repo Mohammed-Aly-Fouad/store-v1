@@ -77,3 +77,25 @@ window.addEventListener('click', (e) => {
     searchResults.innerHTML = '';
   }
 });
+
+
+
+
+
+document.addEventListener('click', function (event) {
+    const searchContainer = document.querySelector('.search-container');
+    const dropdown = document.getElementById('search-results-dropdown');
+
+    // إذا كانت القائمة موجودة والنقر تم خارج .search-container
+    if (dropdown && searchContainer && !searchContainer.contains(event.target)) {
+        dropdown.innerHTML = '';
+    }
+});
+
+// إغلاق القائمة عند الضغط على زر Escape
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+        const dropdown = document.getElementById('search-results-dropdown');
+        if (dropdown) dropdown.innerHTML = '';
+    }
+});

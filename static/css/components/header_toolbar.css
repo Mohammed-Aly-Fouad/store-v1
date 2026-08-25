@@ -1,5 +1,5 @@
-/* ==================== Page Header & Top Toolbar ==================== */
-.top-toolbar {
+/* ==================== Page Header & Header Toolbar ==================== */
+.header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -21,7 +21,7 @@ pub fn router() -> Router<AppState> {
     .route("/create", get(render_create_page))
     .route("/{id}/edit", get(render_edit_page))
     .route("/{id}/edit", post(edit_brand))
-    .route("/{id}/delete", delete(delete_brand))
+    .route("/{id}/delete", post(delete_brand))
     .route("/search", get(search_brands))
 
     }

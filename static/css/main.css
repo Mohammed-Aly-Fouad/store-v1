@@ -495,8 +495,8 @@ input[type="search"]::-webkit-search-results-decoration {
   flex-shrink: 0;
 }
 /* --- static/css/components/header_toolbar.css --- */
-/* ==================== Page Header & Top Toolbar ==================== */
-.top-toolbar {
+/* ==================== Page Header & Header Toolbar ==================== */
+.header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
