@@ -8,7 +8,7 @@
     </div>
 
     {% if let Some(brand) = edit_brand %}
-    <form method="post" action="/web/brands/update/{{ brand.id }}">
+    <form method="post" action="/web/brands/{{ brand.id }}/edit">
       <div class="field">
         <label for="name">الاسم بالإنجليزية</label>
         <input type="text" id="name" name="name_en" value="{{ brand.name_en }}">

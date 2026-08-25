@@ -34,8 +34,8 @@
         <div class="base-card-footer">
           <span class="base-date">{{ brand.created_at.format("%Y-%m-%d") }}</span>
           <div class="card-actions">
-            <a href="/web/brands/edit/{{ brand.id }}" class="btn btn-edit-link">تعديل</a>
-            <form method="post" action="/web/brands/delete/{{ brand.id }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
+            <a href="/web/brands/{{ brand.id }}/edit" class="btn btn-edit-link">تعديل</a>
+            <form method="post" action="/web/brands/{{ brand.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
               <button type="submit" class="btn btn-danger-link">حذف</button>
             </form>
           </div>

@@ -67,3 +67,9 @@ cargo watch -q -c -x "run --bin main"
 cargo clean -p package_name
 
 ```
+
+## SQLX
+```bash
+# To remove migration version
+DELETE FROM _sqlx_migrations WHERE version = 20260825060932;
+```

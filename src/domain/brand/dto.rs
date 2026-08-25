@@ -82,7 +82,7 @@ impl BrandFormErrors {
 
 /// Main page Askama template rendering brand management dashboard (`brands.html`).
 #[derive(Template, WebTemplate)]
-#[template(path = "brands.html")]
+#[template(path = "brands/index.html")]
 pub struct BrandsTemplate {
     pub brands: Vec<BrandResponseDTO>,
     // pub brand_form_errors: Option<BrandFormErrors>,
@@ -97,7 +97,7 @@ pub struct BrandsTemplate {
 
 
 #[derive(Template, WebTemplate)]
-#[template(path = "brand_create.html")]
+#[template(path = "brands/create.html")]
 pub struct BrandCreateTemplate {
     pub form: CreateBrandForm,
     pub errors: Option<BrandFormErrors>,
@@ -108,7 +108,7 @@ pub struct BrandCreateTemplate {
 
 
 #[derive(Template, WebTemplate)]
-#[template(path = "brand_update.html")]
+#[template(path = "brands/edit.html")]
 pub struct BrandUpdateTemplate {
     pub brand: Option<BrandResponseDTO>,
     pub form: CreateBrandForm,

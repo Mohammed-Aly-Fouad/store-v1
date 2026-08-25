@@ -6,12 +6,12 @@
 <div class="container" style="max-width: 600px; margin: 2rem auto;">
   <div class="card">
     <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-      <h2>إضافة براند جديد</h2>
+      <h2>تعديل براند </h2>
       <a href="/web/brands" class="btn btn-ghost">← العودة للبراندات</a>
     </div>
 
     {% if let Some(b) = brand %}
-<form method="post" action="/web/brands/edit/{{ b.id }}">
+<form method="post" action="/web/brands/{{ b.id }}/edit">
 {% endif %}
       
       <!-- الاسم بالإنجليزية -->
@@ -71,7 +71,7 @@
 
       <!-- أزرار الإجراءات -->
       <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
-        <button type="submit" class="btn btn-primary">إضافة البراند</button>
+        <button type="submit" class="btn btn-primary">تعديل البراند</button>
         <a href="/web/brands" class="btn btn-ghost">إلغاء</a>
       </div>
 

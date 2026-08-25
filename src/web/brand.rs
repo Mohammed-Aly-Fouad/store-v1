@@ -2,16 +2,12 @@
 use std::result;
 
 use axum::{
-    extract::{Form, Path, Query, State},
-    http::StatusCode,
-    response::{IntoResponse, Redirect, Response},
-    routing::{get, post},
-    Router,
+    Router, extract::{Form, Path, Query, State}, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::{delete, get, post},
 };
 use serde::Deserialize;
 use sqlx::encode::IsNull::No;
 
-use crate::domain::brand::dto::{BrandCreateTemplate, BrandFormErrors, BrandResponseDTO, BrandUpdateTemplate, BrandsTemplate, CreateBrandForm, FlashParams};
+use crate::domain::brand::dto::{BrandCreateTemplate, BrandFormErrors, BrandResponseDTO, BrandSearchQuery, BrandSearchResultsTemplate, BrandUpdateTemplate, BrandsTemplate, CreateBrandForm, FlashParams};
 
 use crate::state::AppState;
 
@@ -22,15 +18,16 @@ pub fn router() -> Router<AppState> {
     Router::new()
     .route("/", get(render_brands_page))
     .route("/", post(create_brand))
-    .route("/create", get(render_form_page))
-    .route("/create", post(create_brand))
-    .route("/edit/{id}", get(render_edit_page))
-    .route("/edit/{id}", post(edit_brand))
+    .route("/create", get(render_create_page))
+    .route("/{id}/edit", get(render_edit_page))
+    .route("/{id}/edit", post(edit_brand))
+    .route("/{id}/delete", delete(delete_brand))
+    .route("/search", get(search_brands))
 
     }
 
 
-pub async fn render_form_page() -> impl IntoResponse {
+pub async fn render_create_page() -> impl IntoResponse {
     BrandCreateTemplate {
         form: CreateBrandForm::default(),
         errors: None,
@@ -322,5 +319,90 @@ pub async fn edit_brand(
             }
             .into_response()
         }
+    }
+}
+
+
+// ============================================================================
+// HANDLERS: LIVE SEARCH
+// ============================================================================
+
+/// Dynamic search handler returning a rendered Askama partial snippet.
+/// Designed for live search / auto-complete integrations.
+pub async fn search_brands(
+    State(state): State<AppState>,
+    Query(query): Query<BrandSearchQuery>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let q = query.q.trim();
+
+    // إرجاع استجابة فارغة فوراً إن كان الاستعلام خالياً
+    if q.is_empty() {
+        return Ok(BrandSearchResultsTemplate {
+            brands: vec![],
+            query: String::new(),
+        });
+    }
+
+    // إعداد نمط البحث غير حساس للحالة (Case-Insensitive) للغتين العربية والإنجليزية
+    let search_pattern = format!("%{}%", q);
+
+let brands = sqlx::query_as!(
+    BrandResponseDTO,
+    r#"
+    SELECT id, name_en, name_ar, notes, created_at, updated_at
+    FROM brands
+    WHERE name_en ILIKE $1 
+       OR regexp_replace(TRANSLATE(name_ar, 'أإآىة', 'ااايه'), '[\u064B-\u0652]', '', 'g') 
+          ILIKE regexp_replace(TRANSLATE($1, 'أإآىة', 'ااايه'), '[\u064B-\u0652]', '', 'g')
+    ORDER BY name_ar ASC
+    LIMIT 10
+    "#,
+    search_pattern
+)
+.fetch_all(&state.pool)
+.await
+.map_err(|err| {
+    tracing::error!("Failed to execute brand search query: {:?}", err);
+    StatusCode::INTERNAL_SERVER_ERROR
+})?;
+
+    Ok(BrandSearchResultsTemplate {
+        brands,
+        query: q.to_string(),
+    })
+}
+
+pub async fn delete_brand(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Response {
+    let result = sqlx::query!(r#"DELETE FROM brands WHERE id = $1"#, id)
+        .execute(&state.pool)
+        .await;
+
+    match result {
+        Ok(_) => Redirect::to("/web/brands?action=deleted").into_response(),
+        // Error 23503: Foreign Key Constraint Violation (مرتبط بمنتجات أخرى)
+        Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23503") => {
+            BrandsTemplate {
+                brands: fetch_all_brands(&state).await,
+                error_message: Some(
+                    "لا يمكن حذف هذا البراند لأنه مرتبط بسجلات أخرى. قم بإزالتها أو نقلها أولاً."
+                        .to_string(),
+                ),
+                success_message: None,
+                // edit_brand: None,
+                current_page: "brands".to_string(),
+            }
+            .into_response()
+        }
+        Err(_) => BrandsTemplate {
+            brands: fetch_all_brands(&state).await,
+            error_message: Some("حدث خطأ أثناء حذف البراند".to_string()),
+            success_message: None,
+            current_page: "brands".to_string(),
+            // edit_brand: None,
+        }
+        .into_response(),
     }
 }
