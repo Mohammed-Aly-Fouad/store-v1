@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/main.css" />
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 2rem auto;">
+  <div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+      <h2>إضافة فئة جديد</h2>
+      <a href="/web/categories" class="btn btn-ghost">← العودة للفئات</a>
+    </div>
+
+    <form method="post" action="/web/categories">
+      
+      <!-- الاسم بالإنجليزية -->
+      <div class="field">
+        <label for="name_en">الاسم بالإنجليزية</label>
+        <input 
+          type="text" 
+          id="name_en" 
+          name="name_en" 
+          placeholder="e.g. Nike" 
+          value="{{ form.name_en }}"
+        >
+        {% if let Some(errs) = errors %}
+          {% if let Some(err) = errs.name_en %}
+            <span class="error-message" style="color: #dc2626; font-size: 0.85rem; margin-top: 4px; display: block;">
+              {{ err }}
+            </span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- الاسم بالعربية -->
+      <div class="field" style="margin-top: 1rem;">
+        <label for="name_ar">الاسم بالعربية</label>
+        <input 
+          type="text" 
+          id="name_ar" 
+          name="name_ar" 
+          placeholder="مثال: منتجات جلدية" 
+          value="{{ form.name_ar }}"
+        >
+        {% if let Some(errs) = errors %}
+          {% if let Some(err) = errs.name_ar %}
+            <span class="error-message" style="color: #dc2626; font-size: 0.85rem; margin-top: 4px; display: block;">
+              {{ err }}
+            </span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+ <!-- New Section ------------------------>
+ 
+ <!-- End of New Section -------------------------------->
+
+
+
+
+
+
+
+
+      <!-- الملاحظات -->
+      <div class="field" style="margin-top: 1rem;">
+        <label for="notes">ملاحظات (اختياري)</label>
+        <textarea 
+          id="notes" 
+          name="notes" 
+          placeholder="أي ملاحظات إضافية عن البراند"
+        >{% if let Some(notes) = form.notes %}{{ notes }}{% endif %}</textarea>
+        {% if let Some(errs) = errors %}
+          {% if let Some(err) = errs.notes %}
+            <span class="error-message" style="color: #dc2626; font-size: 0.85rem; margin-top: 4px; display: block;">
+              {{ err }}
+            </span>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      <!-- أزرار الإجراءات -->
+      <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+        <button type="submit" class="btn btn-primary">إضافة الفئة</button>
+        <a href="/web/categories" class="btn btn-ghost">إلغاء</a>
+      </div>
+
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -4,7 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 
-#[derive(Deserialize, Serialize, FromRow, Clone)]
+// 1. DTO --> Askama
+#[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
 pub struct CategoryResponseDTO {
     pub id: i64,
     pub name_en: String,
@@ -15,15 +16,101 @@ pub struct CategoryResponseDTO {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
-
+// 2. Template
 #[derive(Template, WebTemplate)]
 #[template(path = "categories/index.html")]
 pub struct CategoryTemplate {
     pub categories: Vec<CategoryResponseDTO>,
+    pub main_categories: Vec<CategoryResponseDTO>,
+    pub sub_categories: Vec<CategoryResponseDTO>,
     pub error_message: Option<String>,
     pub success_message: Option<String>,
     pub current_page: String,
 
+}
+// Helper struct for Asakmak
+#[derive(Default, Debug, Serialize)]
+pub struct CategoryFormErrors {
+    pub name_en: Option<String>,
+    pub name_ar: Option<String>,
+    pub parent_id: Option<i64>,
+    pub parent_name: Option<String>,
+    pub notes: Option<String>,
+}
+
+impl CategoryFormErrors {
+    pub fn has_errors(&self) -> bool {
+        self.name_en.is_some() || self.name_ar.is_some() || self.notes.is_some()
+    }
+}
+
+// 1. Struct of create page form
+#[derive(Debug, Deserialize, Default)]
+pub struct CreateCategoryForm {
+    pub name_en: String,
+    pub name_ar: String,
+    pub parent_id: Option<i64>,
+    pub parent_name: Option<String>,
+    pub notes: Option<String>,
+}
+
+impl CreateCategoryForm {
+    pub fn validate(&self) -> Result<(), CategoryFormErrors> {
+        let mut errors = CategoryFormErrors::default();
+
+        // فحص name_en
+        let trimmed_name_en = self.name_en.trim();
+        if trimmed_name_en.is_empty() {
+            errors.name_en = Some("لا يمكن ترك هذه القيمة فارغة".to_string());
+        } else if trimmed_name_en.chars().count() > 100 {
+            errors.name_en = Some("لا يمكن أن يزيد عدد أحرف هذه الخانة عن 100 حرف".to_string());
+        }
+
+        // فحص name_ar
+        let trimmed_name_ar = self.name_ar.trim();
+        if trimmed_name_ar.is_empty() {
+            errors.name_ar = Some("لا يمكن ترك هذه القيمة فارغة".to_string());
+        } else if trimmed_name_ar.chars().count() > 100 {
+            errors.name_ar = Some("لا يمكن أن يزيد عدد أحرف هذه الخانة عن 100 حرف".to_string());
+        }
+
+         // فحص parent_name
+        if let Some(parent_name) = &self.parent_name {
+            let trimmed_parent_name = parent_name.trim();
+            if trimmed_parent_name.chars().count() > 500 {
+                errors.parent_name = Some("لا يمكن أن يزيد عدد أحرف الفئة عن 500 حرف".to_string());
+            }
+        }
+
+        // فحص notes
+        if let Some(notes) = &self.notes {
+            let trimmed_notes = notes.trim();
+            if trimmed_notes.chars().count() > 500 {
+                errors.notes = Some("لا يمكن أن يزيد عدد أحرف الملاحظات عن 500 حرف".to_string());
+            }
+        }
+
+        if errors.has_errors() {
+            Err(errors)
+        } else {
+            Ok(())
+        }
+    }
+
+
+}
+
+// 2. Tempplate for create page
+
+#[derive(Template, WebTemplate)]
+#[template(path = "categories/create.html")]
+pub struct CategoryCreateTemplate {
+    pub form: CreateCategoryForm,
+    pub errors: Option<CategoryFormErrors>,
+    pub current_page: String,
+    pub error_message: Option<String>,
+    pub success_message: Option<String>,
+    pub main_categories: Vec<CategoryResponseDTO>,
 }
 
 

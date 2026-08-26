@@ -22,7 +22,7 @@
           </div>
         </div>
     {% if let Some(parent_name) = category.parent_name%}
-    <h6>{{parent_name}}</h6>
+    <h6>الفئة : {{parent_name}}</h6>
     {% else %}
     <h5>فئة رئيسية</h5>
     {% endif %}
@@ -40,7 +40,7 @@
           <span class="base-date">{{ category.created_at.format("%Y-%m-%d") }}</span>
           <div class="card-actions">
             <a href="/web/categories/{{ category.id }}/edit" class="btn btn-edit-link">تعديل</a>
-            <form method="post" action="/web/categories/{{ category.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
+            <form method="post" action="/web/categories/{{ category.id }}/delete" onsubmit="return confirm('هل أنت متأكد من حذف هذه الفئة');">
               <button type="submit" class="btn btn-danger-link">حذف</button>
             </form>
           </div>

@@ -2,10 +2,11 @@ use core::sync;
 
 use axum::Router;
 use axum::extract::{Path, Query, State};
+use axum::response::IntoResponse;
 use axum::routing::get;
 use serde::Deserialize;
 
-use crate::domain::category::dto::{CategoryResponseDTO, CategoryTemplate};
+use crate::domain::category::dto::{CategoryCreateTemplate, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm};
 use crate::state::AppState;
 
 
@@ -14,6 +15,7 @@ use crate::state::AppState;
 pub fn router() -> Router<AppState> {
     Router::new()
     .route("/", get(render_categories_page))
+    .route("/create", get(render_create_page))
     
 }
 
@@ -40,6 +42,8 @@ async fn fetch_all_categories(state: &AppState) -> Vec<CategoryResponseDTO> {
     .unwrap_or_default()
 }
 
+
+
 pub async fn render_categories_page(
     State(state): State<AppState>,
     Query(params): Query<FlashParams>,
@@ -56,9 +60,13 @@ pub async fn render_categories_page(
         Some("db_error") => Some("خطأ عام بقاعدة البيانات".to_string()),
         _ => None,
     };
-
+let categories = fetch_all_categories(&state).await;
+let (main_categories, sub_categories): (Vec<CategoryResponseDTO>, Vec<CategoryResponseDTO>) = categories.iter().cloned()
+.partition(|category| category.parent_id.is_none());
     CategoryTemplate {
-        categories: fetch_all_categories(&state).await,
+        categories: categories,
+        main_categories: main_categories,
+        sub_categories: sub_categories,
         error_message: error_message,
         success_message: success_message,
         current_page: "categories".to_string(),
@@ -67,7 +75,25 @@ pub async fn render_categories_page(
 
 
 
+pub async fn render_create_page(
+    State(state): State<AppState>, // 1. استقبال State للوصول للـ Database
+) -> impl IntoResponse {
+    // 2. جلب وتصفية الفئات الرئيسية فقط (التي ليس لها parent_id)
+    let main_categories: Vec<CategoryResponseDTO> = fetch_all_categories(&state)
+        .await
+        .into_iter()
+        .filter(|c| c.parent_id.is_none())
+        .collect();
 
+    CategoryCreateTemplate {
+        form: CreateCategoryForm::default(),
+        main_categories, // 3. تمرير القائمة إلى الـ Template
+        current_page: "categories".to_string(),
+        error_message: None,
+        success_message: None,
+        errors: None,
+    }
+}
 
 
 
