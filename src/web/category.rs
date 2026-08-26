@@ -1,26 +1,28 @@
 use core::sync;
 
-use axum::Router;
 use axum::extract::{Path, Query, State};
-use axum::response::IntoResponse;
-use axum::routing::get;
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, post};
+use axum::{Form, Router};
 use serde::Deserialize;
+use sqlx::encode::IsNull::No;
 
-use crate::domain::category::dto::{CategoryCreateTemplate, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm};
+use crate::domain::category::dto::{
+    CategoryCreateTemplate, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm,
+};
 use crate::state::AppState;
-
-
-
 
 pub fn router() -> Router<AppState> {
     Router::new()
-    .route("/", get(render_categories_page))
-    .route("/create", get(render_create_page))
-    
+        .route("/", get(render_categories_page))
+        .route("/create", get(render_create_page))
+    // .route("/", post(create_category))
 }
 
-async fn fetch_all_categories(state: &AppState) -> Vec<CategoryResponseDTO> {
-    sqlx::query_as!(
+async fn get_main_and_sub_categories(
+    state: &AppState,
+) -> Result<(Vec<CategoryResponseDTO>, Vec<CategoryResponseDTO>), sqlx::Error> {
+    let categories = sqlx::query_as!(
         CategoryResponseDTO,
         r#"
         SELECT
@@ -39,10 +41,12 @@ async fn fetch_all_categories(state: &AppState) -> Vec<CategoryResponseDTO> {
     )
     .fetch_all(&state.pool)
     .await
-    .unwrap_or_default()
+    .unwrap_or_default();
+
+    Ok(categories
+        .into_iter()
+        .partition(|category| category.parent_id.is_none()))
 }
-
-
 
 pub async fn render_categories_page(
     State(state): State<AppState>,
@@ -60,11 +64,10 @@ pub async fn render_categories_page(
         Some("db_error") => Some("خطأ عام بقاعدة البيانات".to_string()),
         _ => None,
     };
-let categories = fetch_all_categories(&state).await;
-let (main_categories, sub_categories): (Vec<CategoryResponseDTO>, Vec<CategoryResponseDTO>) = categories.iter().cloned()
-.partition(|category| category.parent_id.is_none());
+    let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
+        .await
+        .unwrap_or_default();
     CategoryTemplate {
-        categories: categories,
         main_categories: main_categories,
         sub_categories: sub_categories,
         error_message: error_message,
@@ -73,32 +76,23 @@ let (main_categories, sub_categories): (Vec<CategoryResponseDTO>, Vec<CategoryRe
     }
 }
 
-
-
-pub async fn render_create_page(
-    State(state): State<AppState>, // 1. استقبال State للوصول للـ Database
-) -> impl IntoResponse {
-    // 2. جلب وتصفية الفئات الرئيسية فقط (التي ليس لها parent_id)
-    let main_categories: Vec<CategoryResponseDTO> = fetch_all_categories(&state)
+pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResponse {
+    let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
         .await
-        .into_iter()
-        .filter(|c| c.parent_id.is_none())
-        .collect();
-
+        .unwrap_or_default();
     CategoryCreateTemplate {
+        main_categories,
+        sub_categories,
         form: CreateCategoryForm::default(),
-        main_categories, // 3. تمرير القائمة إلى الـ Template
-        current_page: "categories".to_string(),
+        errors: None,
         error_message: None,
         success_message: None,
-        errors: None,
+        current_page: "brand".to_string(),
     }
 }
-
-
 
 #[derive(Debug, Deserialize)]
 pub struct FlashParams {
     pub action: Option<String>,
-    pub error: Option<String>
+    pub error: Option<String>,
 }

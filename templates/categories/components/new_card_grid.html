@@ -1,4 +1,4 @@
-{% if categories.is_empty() %}
+{% if main_categories.is_empty() %}
   <div class="card empty-state-card">
     <div class="empty-state">
       <div class="empty-icon">ف</div>
@@ -8,7 +8,10 @@
   </div>
 {% else %}
   <h1>الفئات الرئيسية</h1>
+  <h6>
+  <span class="badge-count">{{ main_categories.len() }} فئة</span>
 
+  </h6>
   <div class="base-grid">
     {% for category in main_categories %}
       <div class="base-card">
@@ -49,6 +52,10 @@
   </div>
 <hr style="border: none; height: 2px; background-color: #333; margin: 20px 0;">
 <h1>الفئات الفرعية</h1>
+<h6>
+<span class="badge-count">{{ sub_categories.len() }} فئة</span>
+
+</h6>
 
   <div class="base-grid">
     {% for category in sub_categories %}

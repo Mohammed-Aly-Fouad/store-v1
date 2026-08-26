@@ -1,8 +1,34 @@
+use std::{fmt::Display, str::FromStr};
+
 use askama::Template;
 use askama_web::WebTemplate;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::prelude::FromRow;
+
+
+
+pub fn empty_number_as_none<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromStr,
+    T::Err: Display,
+{
+    let opt = Option::<String>::deserialize(deserializer)?;
+
+    match opt.as_deref().map(str::trim) {
+        Some("") | None => Ok(None),
+        Some(s) => s.parse::<T>().map(Some).map_err(serde::de::Error::custom),
+    }
+}
+
+pub fn empty_string_as_none<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let opt = Option::<String>::deserialize(deserializer)?;
+    Ok(opt.filter(|s| !s.trim().is_empty()))
+}
 
 // 1. DTO --> Askama
 #[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
@@ -20,7 +46,6 @@ pub struct CategoryResponseDTO {
 #[derive(Template, WebTemplate)]
 #[template(path = "categories/index.html")]
 pub struct CategoryTemplate {
-    pub categories: Vec<CategoryResponseDTO>,
     pub main_categories: Vec<CategoryResponseDTO>,
     pub sub_categories: Vec<CategoryResponseDTO>,
     pub error_message: Option<String>,
@@ -49,8 +74,9 @@ impl CategoryFormErrors {
 pub struct CreateCategoryForm {
     pub name_en: String,
     pub name_ar: String,
-    pub parent_id: Option<i64>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     pub parent_name: Option<String>,
+    #[serde(default, deserialize_with = "empty_string_as_none")]
     pub notes: Option<String>,
 }
 
@@ -105,12 +131,13 @@ impl CreateCategoryForm {
 #[derive(Template, WebTemplate)]
 #[template(path = "categories/create.html")]
 pub struct CategoryCreateTemplate {
+    pub main_categories: Vec<CategoryResponseDTO>,
+    pub sub_categories: Vec<CategoryResponseDTO>,
     pub form: CreateCategoryForm,
     pub errors: Option<CategoryFormErrors>,
     pub current_page: String,
     pub error_message: Option<String>,
     pub success_message: Option<String>,
-    pub main_categories: Vec<CategoryResponseDTO>,
 }
 
 

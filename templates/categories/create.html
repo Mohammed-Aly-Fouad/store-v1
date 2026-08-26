@@ -20,7 +20,7 @@
           type="text" 
           id="name_en" 
           name="name_en" 
-          placeholder="e.g. Nike" 
+          placeholder="e.g. Leather Products" 
           value="{{ form.name_en }}"
         >
         {% if let Some(errs) = errors %}
@@ -52,7 +52,15 @@
       </div>
 
  <!-- New Section ------------------------>
- 
+ <div class="field">
+ <label for="category">اختر الفئة الرئيسية </label>
+ <select name="parent_name" id="category">
+ <option value="" disabled selected>Select an option ...</option>
+ {% for category in main_categories%}
+ <option value="{{category.name_ar}}">{{category.name_ar}}</option>
+ {% endfor %}
+ </select>
+ </div>
  <!-- End of New Section -------------------------------->
 
 
@@ -68,7 +76,7 @@
         <textarea 
           id="notes" 
           name="notes" 
-          placeholder="أي ملاحظات إضافية عن البراند"
+          placeholder="أي ملاحظات إضافية عن الفئة"
         >{% if let Some(notes) = form.notes %}{{ notes }}{% endif %}</textarea>
         {% if let Some(errs) = errors %}
           {% if let Some(err) = errs.notes %}

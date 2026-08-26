@@ -1,4 +1,4 @@
-{% if categories.is_empty()%}
+{% if main_categories.is_empty()%}
 <div class="card empty-state-card">
 <div class="empty-state">
 <div class="empty-icon">ف</div>
@@ -10,7 +10,7 @@
 </div>
 {% else %}
 <div class="base-grid">
-    {% for category in categories %}
+    {% for category in main_categories %}
       <div class="base-card">
         <div class="base-card-header">
           <span class="avatar" style="background: {{ category.name_en|initial_color }};">
