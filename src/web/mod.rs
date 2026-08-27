@@ -1,5 +1,6 @@
 pub mod brand;
 pub mod category;
+pub mod category2;
 
 
 use crate::{state::AppState};
