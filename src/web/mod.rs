@@ -10,5 +10,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .nest("/brands", brand::router())
         .nest("/categories", category::router())
+        .nest("/test", category2::router())
+
       
 }

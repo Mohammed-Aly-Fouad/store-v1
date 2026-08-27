@@ -34,7 +34,7 @@ where
 
 // ####################################
 
-#[derive(Deserialize, Serialize, FromRow, Clone)]
+#[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
 pub struct CategoryResponseDto {
     pub id: i64,
     pub name_en: String,
