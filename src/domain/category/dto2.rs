@@ -105,7 +105,7 @@ impl CategoryTreeDto {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateCategoryForm {
-    pub name: String,
+    pub name_en: String,
     pub name_ar: String,
 
     // Uses i32 helper
@@ -159,3 +159,23 @@ pub struct CategoryTemplate {
 
 }
 
+pub mod filters {
+    use askama::Values;
+
+    #[askama::filter_fn]
+    pub fn first_letter(name: &str, _values: &dyn Values) -> askama::Result<String> {
+        Ok(name
+            .chars()
+            .next()
+            .map(|c| c.to_uppercase().to_string())
+            .unwrap_or_else(|| "?".to_string()))
+    }
+
+    #[askama::filter_fn]
+    pub fn initial_color(name: &str, _values: &dyn Values) -> askama::Result<String> {
+        const PALETTE: [&str; 6] =
+            ["#0E7C66", "#2563EB", "#D97706", "#7C3AED", "#DB2777", "#0891B2"];
+        let sum: u32 = name.bytes().map(|b| b as u32).sum();
+        Ok(PALETTE[sum as usize % PALETTE.len()].to_string())
+    }
+}
