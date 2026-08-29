@@ -1,7 +1,7 @@
 use core::sync;
 
 use axum::extract::{Path, Query, State};
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
 use serde::Deserialize;
@@ -16,7 +16,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(render_categories_page))
         .route("/create", get(render_create_page))
-    // .route("/", post(create_category))
+    .route("/", post(create_category))
 }
 
 async fn get_main_and_sub_categories(
@@ -96,3 +96,91 @@ pub struct FlashParams {
     pub action: Option<String>,
     pub error: Option<String>,
 }
+
+
+pub async fn create_category(
+    State(state): State<AppState>,
+    Form(mut form): Form<CreateCategoryForm>,
+) -> Response {
+    let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
+        .await
+        .unwrap_or_default();
+    if let Err(form_err) = form.validate() {
+        return CategoryCreateTemplate {
+             main_categories,
+        sub_categories,
+            form,
+            errors: Some(form_err),
+            error_message: Some("يرجى تصحيح الأخطاء لإستكمال التسجيل".to_string()),
+            success_message: None,
+            current_page: "brand".to_string(), 
+        }
+        .into_response();
+    }
+
+    form.name_en = form.name_en.trim().to_string();
+    form.name_ar = form.name_ar.trim().to_string();
+    form.parent_name = form
+        .parent_name
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from); 
+    form.notes = form
+        .notes
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map(String::from);
+
+    let result = sqlx::query!(
+        r#"
+    INSERT INTO categories (name_en, name_ar, parent_id, notes)
+    VALUES (
+        $1, 
+        $2, 
+        (SELECT id FROM categories WHERE name_ar = $3 OR name_en = $3 LIMIT 1), 
+        $4
+    )
+    "#,
+        form.name_en,
+        form.name_ar,
+        form.parent_name,
+        form.notes
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Redirect::to("/web/categories?action=created").into_response(),
+        Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
+           CategoryCreateTemplate {
+             main_categories,
+        sub_categories,
+             form,
+            errors: None,
+            error_message: Some("هذا البيان مسجل بالفعل".to_string()),
+                success_message: None,
+                current_page: "categories".to_string(),
+           } 
+           .into_response()
+        }
+
+         Err(err) => {
+            tracing::error!("فشل إدخال العلامة التجارية في قاعدة البيانات: {:?}", err);
+
+            CategoryCreateTemplate {
+                 main_categories,
+        sub_categories,
+                form,
+                errors: None,
+                error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
+                success_message: None,
+                current_page: "brand".to_string(),
+            }
+            .into_response()
+        }
+    }
+}
+
+

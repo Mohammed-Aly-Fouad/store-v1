@@ -53,9 +53,9 @@
 
  <!-- New Section ------------------------>
  <div class="field">
- <label for="category">اختر الفئة الرئيسية </label>
+ <label for="category">سجل كفئة رئيسية أو اختر إحدى الفئات</label>
  <select name="parent_name" id="category">
- <option value="" disabled selected>Select an option ...</option>
+ <option value="" disabled selected>سجل كفئة رئيسية</option>
  {% for category in main_categories%}
  <option value="{{category.name_ar}}">{{category.name_ar}}</option>
  {% endfor %}
