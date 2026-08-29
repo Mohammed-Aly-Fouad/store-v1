@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use std::{collections::HashMap, fmt::Display, str::FromStr};
 
 use askama::Template;
 use askama_web::WebTemplate;
@@ -140,7 +140,36 @@ pub struct CategoryCreateTemplate {
     pub success_message: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct CategoryRow {
+    pub id: i64,
+    pub name: String,
+    pub name_ar: String,
+    pub notes: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub parent_name: Option<String>,
+}
 
+impl CategoryRow {
+    pub fn build_rows(categories: &[CategoryResponseDTO]) -> Vec<CategoryRow> {
+        let id_to_name: HashMap<i64, &str> =
+            categories.iter().map(|c| (c.id, c.name_en.as_str())).collect();
+
+        categories
+            .iter()
+            .map(|c| CategoryRow {
+                id: c.id,
+                name: c.name_en.clone(),
+                name_ar: c.name_ar.clone(),
+                notes: c.notes.clone(),
+                created_at: c.created_at,
+                parent_name: c
+                    .parent_id
+                    .and_then(|pid| id_to_name.get(&pid).map(|n| n.to_string())),
+            })
+            .collect()
+    }
+}
 // ---------------------------------------------------------------------------
 // 4.1 Custom Askama Filters
 // ---------------------------------------------------------------------------

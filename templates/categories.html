@@ -1,1 +1,90 @@
 {% extends "base.html"%}
+
+{% block title %} إدارة الفئات {% endblock%}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/main.css" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ==================== Header Toolbar ==================== -->
+<div class="header-toolbar">
+    <div class="toolbar-title">
+        <h1>إدارة الفئات</h1>
+        
+    </div>
+
+    <!-- Search Bar -->
+    <div class="search-container" style="position: relative;">
+        <input 
+            type="search" 
+            name_en="q" 
+            class="search-input" 
+            placeholder="بحث عن فئة..." 
+            autocomplete="off"
+            hx-get="/web/categories/search" 
+            hx-trigger="keyup changed delay:300ms, search" 
+            hx-target="#search-results-dropdown" 
+        />
+        
+        <!-- HTMX will inject brand_search_results.html directly INTO here -->
+        <div id="search-results-dropdown" class="search-dropdown"></div>
+    </div>
+
+    <!-- Add Action -->
+   <a href="/web/categories/create" class="btn btn-primary">
+  <span class="btn-icon">+</span> إضافة فئة جديدة
+</a>
+</div>
+
+
+
+<!-- ==================== Cards Grid ==================== -->
+{% if categories.is_empty() %}
+  <div class="card empty-state-card">
+    <div class="empty-state">
+      <div class="empty-icon">ب</div>
+      <p>لا توجد أي فئة مضافة حتى الآن</p>
+      <p class="empty-sub">اضغط على زر "إضافة فئة جديدة" للبدء</p>
+    </div>
+  </div>
+{% else %}
+  <div class="brands-grid">
+    {% for category in categories %}
+      <div class="brand-card">
+        <div class="brand-card-header">
+          <span class="avatar" style="background: {{ category.name_en|initial_color }};">
+            {{ category.name_en|first_letter }}
+          </span>
+          <div class="brand-titles">
+            <h3 class="name-ar">{{ category.name_ar }}</h3>
+            <span class="name-en">{{ category.name_en }}</span>
+          </div>
+        </div>
+
+        <div class="brand-card-body">
+          <p class="brand-notes" title="{% if let Some(notes) = category.notes %}{{ notes }}{% endif %}">
+            {% if let Some(notes) = category.notes %}
+              {{ notes }}
+            {% else %}
+              <span class="no-notes">لا توجد ملاحظات</span>
+            {% endif %}
+          </p>
+        </div>
+
+        <div class="brand-card-footer">
+          <span class="brand-date">{{ category.created_at.format("%Y-%m-%d") }}</span>
+          <div class="card-actions">
+            <a href="/web/categories/edit/{{ category.id }}" class="btn btn-edit-link">تعديل</a>
+            <form method="post" action="/web/categories/delete/{{ category.id }}" onsubmit="return confirm('هل أنت متأكد من حذف هذا البراند؟');">
+              <button type="submit" class="btn btn-danger-link">حذف</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -61,7 +61,9 @@ pub async fn render_categories_page(
     };
 
     let all = fetch_all_categories(&state).await;
-    println!("{:?}", all);
+    // println!("{:#?}", all);
+    let root_categories = build_root_categories(&all, None);
+println!("{:#?}", root_categories);
     CategoryTemplate {
         root_categories: build_root_categories(&all, None),
         categories: CategoryRow::build_rows(&all),
