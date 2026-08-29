@@ -7,6 +7,7 @@ use axum::{Form, Router};
 use serde::Deserialize;
 use sqlx::encode::IsNull::No;
 
+use crate::domain::category;
 use crate::domain::category::dto::{
     CategoryCreateTemplate, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm,
 };
@@ -16,6 +17,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(render_categories_page))
         .route("/create", get(render_create_page))
+        // .route("/{id}/edit", get(render_edit_page))
     .route("/", post(create_category))
 }
 
@@ -80,6 +82,7 @@ pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResp
     let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
         .await
         .unwrap_or_default();
+// tracing::info!("main_categories:\n{main_categories:#?}");
     CategoryCreateTemplate {
         main_categories,
         sub_categories,
@@ -87,9 +90,15 @@ pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResp
         errors: None,
         error_message: None,
         success_message: None,
-        current_page: "brand".to_string(),
+        current_page: "categories".to_string(),
     }
 }
+
+
+
+
+
+
 
 #[derive(Debug, Deserialize)]
 pub struct FlashParams {
@@ -182,5 +191,8 @@ pub async fn create_category(
         }
     }
 }
+
+
+
 
 

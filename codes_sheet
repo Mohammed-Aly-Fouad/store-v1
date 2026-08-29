@@ -73,3 +73,8 @@ cargo clean -p package_name
 # To remove migration version
 DELETE FROM _sqlx_migrations WHERE version = 20260825060932;
 ```
+
+## TRACE
+```bash
+tracing::info!("main_categories:\n{main_categories:#?}");
+```

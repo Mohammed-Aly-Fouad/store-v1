@@ -7,7 +7,7 @@ use axum::{
 use serde::Deserialize;
 use sqlx::encode::IsNull::No;
 
-use crate::domain::brand::dto::{BrandCreateTemplate, BrandFormErrors, BrandResponseDTO, BrandSearchQuery, BrandSearchResultsTemplate, BrandUpdateTemplate, BrandsTemplate, CreateBrandForm, FlashParams};
+use crate::domain::brand::dto::{BrandCreateTemplate, BrandFormErrors, BrandResponseDTO, BrandSearchQuery, BrandSearchResultsTemplate, BrandUpdateTemplate, BrandsTemplate, BrandForm, FlashParams};
 
 use crate::state::AppState;
 
@@ -29,7 +29,7 @@ pub fn router() -> Router<AppState> {
 
 pub async fn render_create_page() -> impl IntoResponse {
     BrandCreateTemplate {
-        form: CreateBrandForm::default(),
+        form: BrandForm::default(),
         errors: None,
         error_message: None,
         success_message: None,
@@ -120,7 +120,7 @@ pub async fn render_brands_page(
 
 pub async fn create_brand(
     State(state): State<AppState>,
-    Form(mut form): Form<CreateBrandForm>,
+    Form(mut form): Form<BrandForm>,
 ) -> Response {
     // 1. التحقق من المدخلات (Validation)
     if let Err(form_err) = form.validate() {
@@ -200,7 +200,7 @@ pub async fn render_edit_page(
 
     match brand {
         Ok(Some(b)) => {
-            let form = CreateBrandForm {
+            let form = BrandForm {
                 name_en: b.name_en.clone(),
                 name_ar: b.name_ar.clone(),
                 notes: b.notes.clone(),
@@ -225,7 +225,7 @@ pub async fn render_edit_page(
 pub async fn edit_brand(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    Form(mut form): Form<CreateBrandForm>,
+    Form(mut form): Form<BrandForm>,
 ) -> Response {
     // 1. جلب السجل أولاً والتأكد من وجوده في قاعدة البيانات
     let existing_brand = match fetch_brand_by_id(&state, id).await {

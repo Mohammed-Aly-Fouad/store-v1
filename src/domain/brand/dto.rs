@@ -17,13 +17,13 @@ pub struct BrandResponseDTO {
 }
 
 #[derive(Debug, Deserialize, Default)]
-pub struct CreateBrandForm {
+pub struct BrandForm {
     pub name_en: String,
     pub name_ar: String,
     pub notes: Option<String>,
 }
 
-impl CreateBrandForm {
+impl BrandForm {
     pub fn validate(&self) -> Result<(), BrandFormErrors> {
         let mut errors = BrandFormErrors::default();
 
@@ -90,7 +90,7 @@ pub struct BrandsTemplate {
     pub success_message: Option<String>,
     // pub edit_brand: Option<BrandResponseDTO>,
     pub current_page: String,
-    // pub form_data: Option<CreateBrandForm>,
+    // pub form_data: Option<BrandForm>,
     // pub show_modal: bool
     
 }
@@ -99,7 +99,7 @@ pub struct BrandsTemplate {
 #[derive(Template, WebTemplate)]
 #[template(path = "brands/create.html")]
 pub struct BrandCreateTemplate {
-    pub form: CreateBrandForm,
+    pub form: BrandForm,
     pub errors: Option<BrandFormErrors>,
     pub current_page: String,
     pub error_message: Option<String>,
@@ -111,7 +111,7 @@ pub struct BrandCreateTemplate {
 #[template(path = "brands/edit.html")]
 pub struct BrandUpdateTemplate {
     pub brand: Option<BrandResponseDTO>,
-    pub form: CreateBrandForm,
+    pub form: BrandForm,
     pub errors: Option<BrandFormErrors>,
     pub current_page: String,
     pub error_message: Option<String>,
