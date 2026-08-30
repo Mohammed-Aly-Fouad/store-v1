@@ -1,15 +1,11 @@
-use core::sync;
 
 use axum::extract::{Path, Query, State};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Form, Router};
-use serde::Deserialize;
-use sqlx::encode::IsNull::No;
 
-use crate::domain::category;
 use crate::domain::category::dto::{
-    CategoryCreateTemplate, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm,
+    CategoryCreateTemplate, CategoryFormErrors, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm, FlashParams
 };
 use crate::state::AppState;
 
@@ -79,13 +75,12 @@ pub async fn render_categories_page(
 }
 
 pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResponse {
-    let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
+    let (main_categories, _) = get_main_and_sub_categories(&state)
         .await
         .unwrap_or_default();
 // tracing::info!("main_categories:\n{main_categories:#?}");
     CategoryCreateTemplate {
         main_categories,
-        sub_categories,
         form: CreateCategoryForm::default(),
         errors: None,
         error_message: None,
@@ -100,61 +95,84 @@ pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResp
 
 
 
-#[derive(Debug, Deserialize)]
-pub struct FlashParams {
-    pub action: Option<String>,
-    pub error: Option<String>,
-}
+
 
 
 pub async fn create_category(
     State(state): State<AppState>,
     Form(mut form): Form<CreateCategoryForm>,
 ) -> Response {
-    let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
-        .await
-        .unwrap_or_default();
+    let (main_categories, _) = match get_main_and_sub_categories(&state).await {
+        Ok(data) => data,
+        Err(err) => {
+            tracing::error!("فشل جلب الفئات: {:?}", err);
+            return CategoryCreateTemplate {
+                main_categories: vec![],
+                form,
+                errors: None,
+                error_message: Some("حدث خطأ في جلب البيانات".to_string()),
+                success_message: None,
+                current_page: "categories".to_string(),
+            }
+            .into_response();
+        }
+    };
+
+    form.sanitize();
+
     if let Err(form_err) = form.validate() {
         return CategoryCreateTemplate {
-             main_categories,
-        sub_categories,
+            main_categories,
             form,
             errors: Some(form_err),
             error_message: Some("يرجى تصحيح الأخطاء لإستكمال التسجيل".to_string()),
             success_message: None,
-            current_page: "brand".to_string(), 
+            current_page: "categories".to_string(),
         }
         .into_response();
     }
 
-    form.name_en = form.name_en.trim().to_string();
-    form.name_ar = form.name_ar.trim().to_string();
-    form.parent_name = form
-        .parent_name
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(String::from); 
-    form.notes = form
-        .notes
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty())
-        .map(String::from);
+    // تحقق من وجود الأب فعليًا لو المستخدم كتب اسم
+    let parent_id: Option<i64> = if let Some(ref name) = form.parent_name {
+        match sqlx::query_scalar!(
+            "SELECT id FROM categories WHERE name_ar = $1 OR name_en = $1 LIMIT 1",
+            name
+        )
+        .fetch_optional(&state.pool)
+        .await
+        {
+            Ok(id) => id,
+            Err(err) => {
+                tracing::error!("فشل البحث عن الفئة الأب: {:?}", err);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    if form.parent_name.is_some() && parent_id.is_none() {
+        let mut errors = CategoryFormErrors::default();
+        errors.parent_name = Some("الفئة الأب غير موجودة".to_string());
+        return CategoryCreateTemplate {
+            main_categories,
+            form,
+            errors: Some(errors),
+            error_message: Some("يرجى تصحيح الأخطاء لإستكمال التسجيل".to_string()),
+            success_message: None,
+            current_page: "categories".to_string(),
+        }
+        .into_response();
+    }
 
     let result = sqlx::query!(
         r#"
-    INSERT INTO categories (name_en, name_ar, parent_id, notes)
-    VALUES (
-        $1, 
-        $2, 
-        (SELECT id FROM categories WHERE name_ar = $3 OR name_en = $3 LIMIT 1), 
-        $4
-    )
-    "#,
+        INSERT INTO categories (name_en, name_ar, parent_id, notes)
+        VALUES ($1, $2, $3, $4)
+        "#,
         form.name_en,
         form.name_ar,
-        form.parent_name,
+        parent_id,
         form.notes
     )
     .execute(&state.pool)
@@ -163,29 +181,25 @@ pub async fn create_category(
     match result {
         Ok(_) => Redirect::to("/web/categories?action=created").into_response(),
         Err(sqlx::Error::Database(db_err)) if db_err.code().as_deref() == Some("23505") => {
-           CategoryCreateTemplate {
-             main_categories,
-        sub_categories,
-             form,
-            errors: None,
-            error_message: Some("هذا البيان مسجل بالفعل".to_string()),
+            CategoryCreateTemplate {
+                main_categories,
+                form,
+                errors: None,
+                error_message: Some("هذا البيان مسجل بالفعل".to_string()),
                 success_message: None,
                 current_page: "categories".to_string(),
-           } 
-           .into_response()
+            }
+            .into_response()
         }
-
-         Err(err) => {
-            tracing::error!("فشل إدخال العلامة التجارية في قاعدة البيانات: {:?}", err);
-
+        Err(err) => {
+            tracing::error!("فشل إدخال الفئة في قاعدة البيانات: {:?}", err);
             CategoryCreateTemplate {
-                 main_categories,
-        sub_categories,
+                main_categories,
                 form,
                 errors: None,
                 error_message: Some("حدث خطأ عام .. برجاء المحاولة لاحقاً".to_string()),
                 success_message: None,
-                current_page: "brand".to_string(),
+                current_page: "categories".to_string(),
             }
             .into_response()
         }

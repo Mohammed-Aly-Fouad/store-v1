@@ -33,7 +33,7 @@ where
 // 1. DTO --> Askama
 #[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
 pub struct CategoryResponseDTO {
-    pub id: i64,
+    pub id: i64, 
     pub name_en: String,
     pub name_ar: String,
     pub parent_id: Option<i64>,
@@ -54,18 +54,21 @@ pub struct CategoryTemplate {
 
 }
 // Helper struct for Asakmak
+// Helper struct for Askama
 #[derive(Default, Debug, Serialize)]
 pub struct CategoryFormErrors {
     pub name_en: Option<String>,
     pub name_ar: Option<String>,
-    pub parent_id: Option<i64>,
     pub parent_name: Option<String>,
     pub notes: Option<String>,
 }
 
 impl CategoryFormErrors {
     pub fn has_errors(&self) -> bool {
-        self.name_en.is_some() || self.name_ar.is_some() || self.notes.is_some()
+        self.name_en.is_some()
+            || self.name_ar.is_some()
+            || self.parent_name.is_some()
+            || self.notes.is_some()
     }
 }
 
@@ -81,37 +84,44 @@ pub struct CreateCategoryForm {
 }
 
 impl CreateCategoryForm {
+    /// ينظف القيم فعليًا (trim) - يُستدعى قبل validate() وقبل التخزين في الداتابيز
+    pub fn sanitize(&mut self) {
+        self.name_en = self.name_en.trim().to_string();
+        self.name_ar = self.name_ar.trim().to_string();
+        self.parent_name = self.parent_name.take().map(|s| s.trim().to_string());
+        self.notes = self.notes.take().map(|s| s.trim().to_string());
+    }
+
+    /// يتحقق فقط من صحة القيم - read-only، بدون أي تعديل على self
     pub fn validate(&self) -> Result<(), CategoryFormErrors> {
         let mut errors = CategoryFormErrors::default();
 
         // فحص name_en
-        let trimmed_name_en = self.name_en.trim();
-        if trimmed_name_en.is_empty() {
+        let name_en = self.name_en.trim();
+        if name_en.is_empty() {
             errors.name_en = Some("لا يمكن ترك هذه القيمة فارغة".to_string());
-        } else if trimmed_name_en.chars().count() > 100 {
+        } else if name_en.chars().count() > 100 {
             errors.name_en = Some("لا يمكن أن يزيد عدد أحرف هذه الخانة عن 100 حرف".to_string());
         }
 
         // فحص name_ar
-        let trimmed_name_ar = self.name_ar.trim();
-        if trimmed_name_ar.is_empty() {
+        let name_ar = self.name_ar.trim();
+        if name_ar.is_empty() {
             errors.name_ar = Some("لا يمكن ترك هذه القيمة فارغة".to_string());
-        } else if trimmed_name_ar.chars().count() > 100 {
+        } else if name_ar.chars().count() > 100 {
             errors.name_ar = Some("لا يمكن أن يزيد عدد أحرف هذه الخانة عن 100 حرف".to_string());
         }
 
-         // فحص parent_name
-        if let Some(parent_name) = &self.parent_name {
-            let trimmed_parent_name = parent_name.trim();
-            if trimmed_parent_name.chars().count() > 500 {
+        // فحص parent_name
+        if let Some(parent_name) = self.parent_name.as_deref() {
+            if parent_name.trim().chars().count() > 500 {
                 errors.parent_name = Some("لا يمكن أن يزيد عدد أحرف الفئة عن 500 حرف".to_string());
             }
         }
 
         // فحص notes
-        if let Some(notes) = &self.notes {
-            let trimmed_notes = notes.trim();
-            if trimmed_notes.chars().count() > 500 {
+        if let Some(notes) = self.notes.as_deref() {
+            if notes.trim().chars().count() > 500 {
                 errors.notes = Some("لا يمكن أن يزيد عدد أحرف الملاحظات عن 500 حرف".to_string());
             }
         }
@@ -122,17 +132,14 @@ impl CreateCategoryForm {
             Ok(())
         }
     }
-
-
 }
-
 // 2. Tempplate for create page
 
 #[derive(Template, WebTemplate)]
 #[template(path = "categories/create.html")]
 pub struct CategoryCreateTemplate {
     pub main_categories: Vec<CategoryResponseDTO>,
-    pub sub_categories: Vec<CategoryResponseDTO>,
+    // pub sub_categories: Vec<CategoryResponseDTO>,
     pub form: CreateCategoryForm,
     pub errors: Option<CategoryFormErrors>,
     pub current_page: String,
@@ -140,36 +147,7 @@ pub struct CategoryCreateTemplate {
     pub success_message: Option<String>,
 }
 
-#[derive(Debug, Clone)]
-pub struct CategoryRow {
-    pub id: i64,
-    pub name: String,
-    pub name_ar: String,
-    pub notes: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub parent_name: Option<String>,
-}
-
-impl CategoryRow {
-    pub fn build_rows(categories: &[CategoryResponseDTO]) -> Vec<CategoryRow> {
-        let id_to_name: HashMap<i64, &str> =
-            categories.iter().map(|c| (c.id, c.name_en.as_str())).collect();
-
-        categories
-            .iter()
-            .map(|c| CategoryRow {
-                id: c.id,
-                name: c.name_en.clone(),
-                name_ar: c.name_ar.clone(),
-                notes: c.notes.clone(),
-                created_at: c.created_at,
-                parent_name: c
-                    .parent_id
-                    .and_then(|pid| id_to_name.get(&pid).map(|n| n.to_string())),
-            })
-            .collect()
-    }
-}
+// 
 // ---------------------------------------------------------------------------
 // 4.1 Custom Askama Filters
 // ---------------------------------------------------------------------------
