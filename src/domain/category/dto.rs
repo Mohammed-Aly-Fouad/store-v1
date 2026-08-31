@@ -161,6 +161,7 @@ pub struct CategoryCreateTemplate {
 pub struct CategoryEditTemplate {
     pub main_categories: Vec<CategoryResponseDTO>,
     pub sub_categories: Vec<CategoryResponseDTO>,
+    pub category: Option<CategoryResponseDTO>,
     pub form: CategoryForm,
     pub errors: Option<CategoryFormErrors>,
     pub current_page: String,

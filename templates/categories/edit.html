@@ -11,7 +11,9 @@
       <a href="/web/categories" class="btn btn-ghost">← العودة للفئات</a>
     </div>
 
-    <form method="post" action="/web/categories">
+    {% if let Some(cat) = category %}
+    <form method="post" action="/web/{{ cat.id }}/edit">
+{% endif %}
       
       <!-- الاسم بالإنجليزية -->
       <div class="field">

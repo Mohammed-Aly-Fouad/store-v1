@@ -238,15 +238,16 @@ id
     match category {
         Ok(Some(c)) => {
             let form = CategoryForm {
-                name_en: c.name_en,
-                name_ar: c.name_ar,
-                parent_name: c.parent_name,
-                notes: c.notes,
+                name_en: c.name_en.clone(),
+                name_ar: c.name_ar.clone(),
+                parent_name: c.parent_name.clone(),
+                notes: c.notes.clone(),
             };
 
             CategoryEditTemplate {
                 main_categories,
                 sub_categories,
+                category: Some(c),
                 form,
                 errors: None,
                 success_message: None,
