@@ -5,7 +5,7 @@ use axum::routing::{get, post};
 use axum::{Form, Router};
 
 use crate::domain::category::dto::{
-    CategoryCreateTemplate, CategoryFormErrors, CategoryResponseDTO, CategoryTemplate, CreateCategoryForm, FlashParams
+    CategoryCreateTemplate, CategoryFormErrors, CategoryResponseDTO, CategoryTemplate, CategoryForm, CategoryEditTemplate, FlashParams
 };
 use crate::state::AppState;
 
@@ -13,7 +13,7 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .route("/", get(render_categories_page))
         .route("/create", get(render_create_page))
-        // .route("/{id}/edit", get(render_edit_page))
+        .route("/{id}/edit", get(render_edit_page))
     .route("/", post(create_category))
 }
 
@@ -81,7 +81,7 @@ pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResp
 // tracing::info!("main_categories:\n{main_categories:#?}");
     CategoryCreateTemplate {
         main_categories,
-        form: CreateCategoryForm::default(),
+        form: CategoryForm::default(),
         errors: None,
         error_message: None,
         success_message: None,
@@ -100,7 +100,7 @@ pub async fn render_create_page(State(state): State<AppState>,) -> impl IntoResp
 
 pub async fn create_category(
     State(state): State<AppState>,
-    Form(mut form): Form<CreateCategoryForm>,
+    Form(mut form): Form<CategoryForm>,
 ) -> Response {
     let (main_categories, _) = match get_main_and_sub_categories(&state).await {
         Ok(data) => data,
@@ -210,3 +210,53 @@ pub async fn create_category(
 
 
 
+pub async fn render_edit_page(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Response {
+     let (main_categories, sub_categories) = get_main_and_sub_categories(&state)
+        .await
+        .unwrap_or_default();
+    let category = sqlx::query_as!(
+        CategoryResponseDTO,
+        r#" SELECT
+    c.id,
+    c.name_en,
+    c.name_ar,
+    c.parent_id,
+    p.name_ar AS "parent_name?",
+    c.notes,
+    c.created_at,
+    c.updated_at
+FROM categories c
+LEFT JOIN categories p ON c.parent_id = p.id
+WHERE c.id = $1;"#,
+id
+    ).fetch_optional(&state.pool)
+    .await;
+
+    match category {
+        Ok(Some(c)) => {
+            let form = CategoryForm {
+                name_en: c.name_en,
+                name_ar: c.name_ar,
+                parent_name: c.parent_name,
+                notes: c.notes,
+            };
+
+            CategoryEditTemplate {
+                main_categories,
+                sub_categories,
+                form,
+                errors: None,
+                success_message: None,
+                error_message: None,
+                current_page: "categories".to_string(),
+            }.into_response()
+        }
+
+        Ok(None) => Redirect::to("/web/categories/error=not_found").into_response(),
+        Err(_) => Redirect::to("/web/categories/error=db_err").into_response()
+        
+    }
+}

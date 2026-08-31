@@ -6,7 +6,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize};
 use sqlx::prelude::FromRow;
 
-
+//######################################################
+//######################################################
 
 pub fn empty_number_as_none<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
@@ -29,7 +30,8 @@ where
     let opt = Option::<String>::deserialize(deserializer)?;
     Ok(opt.filter(|s| !s.trim().is_empty()))
 }
-
+//######################################################
+//######################################################
 // 1. DTO --> Askama
 #[derive(Deserialize, Serialize, FromRow, Clone, Debug)]
 pub struct CategoryResponseDTO {
@@ -42,17 +44,9 @@ pub struct CategoryResponseDTO {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
-// 2. Template
-#[derive(Template, WebTemplate)]
-#[template(path = "categories/index.html")]
-pub struct CategoryTemplate {
-    pub main_categories: Vec<CategoryResponseDTO>,
-    pub sub_categories: Vec<CategoryResponseDTO>,
-    pub error_message: Option<String>,
-    pub success_message: Option<String>,
-    pub current_page: String,
+//######################################################
+//######################################################
 
-}
 // Helper struct for Asakmak
 // Helper struct for Askama
 #[derive(Default, Debug, Serialize)]
@@ -74,7 +68,7 @@ impl CategoryFormErrors {
 
 // 1. Struct of create page form
 #[derive(Debug, Deserialize, Default)]
-pub struct CreateCategoryForm {
+pub struct CategoryForm {
     pub name_en: String,
     pub name_ar: String,
     #[serde(default, deserialize_with = "empty_string_as_none")]
@@ -83,7 +77,7 @@ pub struct CreateCategoryForm {
     pub notes: Option<String>,
 }
 
-impl CreateCategoryForm {
+impl CategoryForm {
     /// ينظف القيم فعليًا (trim) - يُستدعى قبل validate() وقبل التخزين في الداتابيز
     pub fn sanitize(&mut self) {
         self.name_en = self.name_en.trim().to_string();
@@ -133,20 +127,46 @@ impl CreateCategoryForm {
         }
     }
 }
+
+// ============================================================================
+// SECTION 4: ASKAMA TEMPLATES & UI FILTERS
+// ============================================================================
+// 2. Template
+#[derive(Template, WebTemplate)]
+#[template(path = "categories/index.html")]
+pub struct CategoryTemplate {
+    pub main_categories: Vec<CategoryResponseDTO>,
+    pub sub_categories: Vec<CategoryResponseDTO>,
+    pub error_message: Option<String>,
+    pub success_message: Option<String>,
+    pub current_page: String,
+
+}
+
 // 2. Tempplate for create page
 
 #[derive(Template, WebTemplate)]
 #[template(path = "categories/create.html")]
 pub struct CategoryCreateTemplate {
     pub main_categories: Vec<CategoryResponseDTO>,
-    // pub sub_categories: Vec<CategoryResponseDTO>,
-    pub form: CreateCategoryForm,
+    pub form: CategoryForm,
     pub errors: Option<CategoryFormErrors>,
     pub current_page: String,
     pub error_message: Option<String>,
     pub success_message: Option<String>,
 }
 
+#[derive(Template, WebTemplate)]
+#[template(path = "categories/edit.html")]
+pub struct CategoryEditTemplate {
+    pub main_categories: Vec<CategoryResponseDTO>,
+    pub sub_categories: Vec<CategoryResponseDTO>,
+    pub form: CategoryForm,
+    pub errors: Option<CategoryFormErrors>,
+    pub current_page: String,
+    pub error_message: Option<String>,
+    pub success_message: Option<String>,
+}
 // 
 // ---------------------------------------------------------------------------
 // 4.1 Custom Askama Filters

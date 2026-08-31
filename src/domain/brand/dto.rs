@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
 use sqlx::FromRow;
 
-
+//######################################################
+//######################################################
 #[derive(Debug, Serialize, FromRow, Clone, Deserialize)]
 pub struct BrandResponseDTO {
     pub id: i64,
@@ -15,7 +16,8 @@ pub struct BrandResponseDTO {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
-
+//######################################################
+//######################################################
 #[derive(Debug, Deserialize, Default)]
 pub struct BrandForm {
     pub name_en: String,
